@@ -1,0 +1,51 @@
+#!/usr/bin/python3
+
+''' Vidterm: A simple video editor CLI for MoviePY.
+'''
+
+import argparse
+from moviepy import editor
+import sys
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('file', help='Video file to take clip from.')
+parser.add_argument('start', help='Start time of clip (seconds.)')
+parser.add_argument('end', help='End time of clip (seconds.)')
+
+
+class Aggregator(object):
+
+    clips = []
+
+
+    def __init__(self, target):
+        print(f'> Target file: {target}')
+        self.target = target
+
+
+    def parse(self, cmd_block):
+        args = parser.parse_args(cmd_block.split(':'))
+
+        self.add_clip(args.file, args.start, args.end)
+
+
+    def add_clip(self, source, start, end):
+        print(f'>  Loading {source}')
+        print(f'>  >  Clipping from {start} to {end}')
+        self.clips.append(editor.VideoFileClip(source).subclip(start, end))
+
+
+    def save(self):
+        final = editor.concatenate_videoclips(self.clips)
+        final.write_videofile(self.target)
+
+
+if __name__ == '__main__':
+    agg = Aggregator(sys.argv[1])
+
+    # Actually start processing
+    for arg_block in sys.argv[2:]:
+        agg.parse(arg_block)
+
+    agg.save()
