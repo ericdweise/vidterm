@@ -1,11 +1,10 @@
 #!/usr/bin/python3
-
-''' Vidterm: A simple video editor CLI for MoviePY.
-'''
+''' Vidterm: A very simple CLI for MoviePY.'''
 
 import argparse
-from moviepy import editor
 import sys
+
+from moviepy import editor
 
 parser = argparse.ArgumentParser()
 
@@ -66,7 +65,7 @@ class Aggregator(object):
         if args.audio_fadeout:
             self.audio_fadeout(args.audio_fadeout)
 
-    def add_clip(self, source, start, end):
+    def add_clip(self, source, start=None, end=None):
         print(f'>  Loading {source}')
         print(f'>  >  Clipping from {start} to {end}')
         self.clips.append(editor.VideoFileClip(source).subclip(start, end))
@@ -105,7 +104,7 @@ class Aggregator(object):
         self.render()
 
         if not self.target:
-            self.target = input('Where do you want to save the final video? ') 
+            self.target = input('Where do you want to save the final video? ')
 
         self.clips[-1].write_videofile(self.target)
 
