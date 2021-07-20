@@ -16,6 +16,7 @@ parser.add_argument('-c', '--clip', nargs='+', help='Take a clip from a video fi
 
 # Video
 parser.add_argument('-s', '--speed', type=float, help='Speed up factor. 1.0 is regular speed.')
+parser.add_argument('-f', '--fadeout', type=float, help='Fade to black for N seconds.')
 
 
 class Aggregator(object):
@@ -41,6 +42,9 @@ class Aggregator(object):
         if args.speed:
             self.speedx(args.speed)
 
+        if args.fadeout:
+            self.fadeout(args.fadeout)
+
     def add_clip(self, source, start, end):
         print(f'>  Loading {source}')
         print(f'>  >  Clipping from {start} to {end}')
@@ -49,6 +53,10 @@ class Aggregator(object):
     def speedx(self, factor):
         print(f'>  >  Speeding up by factor: {factor}')
         self.clips[-1] = self.clips[-1].speedx(factor)
+
+    def fadeout(self, duration):
+        print(f'>  >  Fading out for {duration} seconds')
+        self.clips[-1] = self.clips[-1].fadeout(duration)
 
     def save(self):
         final = editor.concatenate_videoclips(self.clips)
