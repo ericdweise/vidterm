@@ -13,6 +13,7 @@ parser.add_argument('-t', '--target', help='Output file.')
 
 # Manage clips
 parser.add_argument('-c', '--clip', nargs='+', help='Take a clip from a video file. First argument is the video file. Second argument is optional and is the start time of the clip as taken from the video file (in seconds). Third argument is optional and is the end time in seconds.')
+parser.add_argument('-r', '--render', action='store_true', help='Render current clips.')
 
 # Video
 parser.add_argument('-s', '--speed', type=float, help='Speed up factor. 1.0 is regular speed.')
@@ -39,6 +40,9 @@ class Aggregator(object):
             else:
                 raise Exception(f'Expected 1 to 3 arguments. Got {len(args.clip)}.')
 
+        if args.render:
+            self.render()
+
         if args.speed:
             self.speedx(args.speed)
 
@@ -58,13 +62,22 @@ class Aggregator(object):
         print(f'>  >  Fading out for {duration} seconds')
         self.clips[-1] = self.clips[-1].fadeout(duration)
 
+    def render(self):
+        print(f'>  Rendering all current clips')
+        intermediate = editor.concatenate_videoclips(self.clips)
+        self.clips = [intermediate,]
+
     def save(self):
-        final = editor.concatenate_videoclips(self.clips)
-        final.write_videofile(self.target)
+        self.render()
+
+        if not self.target:
+            self.target = input('Where do you want to save the final video? ') 
+
+        self.clips[-1].write_videofile(self.target)
 
 
 if __name__ == '__main__':
-    agg = Aggregator(sys.argv[1])
+    agg = Aggregator()
 
     idx = []
     for k in range(1, len(sys.argv)):
