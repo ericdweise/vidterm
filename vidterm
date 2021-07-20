@@ -19,6 +19,10 @@ parser.add_argument('-r', '--render', action='store_true', help='Render current 
 parser.add_argument('-s', '--speed', type=float, help='Speed up factor. 1.0 is regular speed.')
 parser.add_argument('-f', '--fadeout', type=float, help='Fade to black for N seconds.')
 
+# Audio
+parser.add_argument('-a', '--add-audio', nargs='+', help='Add audio from a file. Optional start and end times.')
+parser.add_argument('-afo', '--audio-fadeout', type=float, help='Fade out audio for last N seconds')
+
 
 class Aggregator(object):
 
@@ -49,6 +53,19 @@ class Aggregator(object):
         if args.fadeout:
             self.fadeout(args.fadeout)
 
+        if args.add_audio:
+            if len(args.add_audio) == 1:
+                self.add_audio(args.add_audio[0])
+            elif len(args.add_audio) == 2:
+                self.add_audio(args.add_audio[0], args.add_audio[1])
+            elif len(args.add_audio) == 3:
+                self.add_audio(args.add_audio[0], args.add_audio[1], args.add_audio[2])
+            else:
+                raise Exception(f'Expected 1 to 3 arguments. Got {len(args.clip)}.')
+
+        if args.audio_fadeout:
+            self.audio_fadeout(args.audio_fadeout)
+
     def add_clip(self, source, start, end):
         print(f'>  Loading {source}')
         print(f'>  >  Clipping from {start} to {end}')
@@ -61,6 +78,23 @@ class Aggregator(object):
     def fadeout(self, duration):
         print(f'>  >  Fading out for {duration} seconds')
         self.clips[-1] = self.clips[-1].fadeout(duration)
+
+    def add_audio(self, audio_file, start=None, end=None):
+        print(f'>  >  Adding audio from {audio_file}')
+        track = editor.AudioFileClip(audio_file)
+
+        if start:
+            if not end:
+                end = track.duration
+            track = track.subclip(start, end)
+
+        if track.duration > self.clips[-1].duration:
+            track = track.subclip(0, self.clips[-1].duration)
+
+        self.clips[-1] = self.clips[-1].set_audio(track)
+
+    def audio_fadeout(self, seconds):
+        self.clips[-1] = self.clips[-1].audio_fadeout(seconds)
 
     def render(self):
         print(f'>  Rendering all current clips')
