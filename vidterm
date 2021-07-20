@@ -9,26 +9,31 @@ import sys
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('file', help='Video file to take clip from.')
-parser.add_argument('start', help='Start time of clip (seconds.)')
-parser.add_argument('end', help='End time of clip (seconds.)')
+parser.add_argument('-t', '--target', help='Output file.')
+
+# Manage clips
+parser.add_argument('-c', '--clip', nargs='+', help='Take a clip from a video file. First argument is the video file. Second argument is optional and is the start time of the clip as taken from the video file (in seconds). Third argument is optional and is the end time in seconds.')
 
 
 class Aggregator(object):
 
     clips = []
+    target = None
 
 
-    def __init__(self, target):
-        print(f'> Target file: {target}')
-        self.target = target
+    def parse(self, command):
+        args = parser.parse_args(command)
 
+        if args.target:
+            self.target = args.target
 
-    def parse(self, cmd_block):
-        args = parser.parse_args(cmd_block.split(':'))
-
-        self.add_clip(args.file, args.start, args.end)
-
+        if args.clip:
+            if len(args.clip) == 1:
+                self.add_clip(args.clip[0])
+            elif len(args.clip) == 3:
+                self.add_clip(args.clip[0], args.clip[1], args.clip[2])
+            else:
+                raise Exception(f'Expected 1 to 3 arguments. Got {len(args.clip)}.')
 
     def add_clip(self, source, start, end):
         print(f'>  Loading {source}')
@@ -44,8 +49,13 @@ class Aggregator(object):
 if __name__ == '__main__':
     agg = Aggregator(sys.argv[1])
 
-    # Actually start processing
-    for arg_block in sys.argv[2:]:
-        agg.parse(arg_block)
+    idx = []
+    for k in range(1, len(sys.argv)):
+        if sys.argv[k][0] == '-':
+            idx.append(k)
+
+    for i in range(len(idx[:-1])):
+        agg.parse(sys.argv[idx[i]: idx[i+1]])
+    agg.parse(sys.argv[idx[-1]:])
 
     agg.save()
