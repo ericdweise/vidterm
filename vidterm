@@ -14,6 +14,9 @@ parser.add_argument('-t', '--target', help='Output file.')
 # Manage clips
 parser.add_argument('-c', '--clip', nargs='+', help='Take a clip from a video file. First argument is the video file. Second argument is optional and is the start time of the clip as taken from the video file (in seconds). Third argument is optional and is the end time in seconds.')
 
+# Video
+parser.add_argument('-s', '--speed', type=float, help='Speed up factor. 1.0 is regular speed.')
+
 
 class Aggregator(object):
 
@@ -35,11 +38,17 @@ class Aggregator(object):
             else:
                 raise Exception(f'Expected 1 to 3 arguments. Got {len(args.clip)}.')
 
+        if args.speed:
+            self.speedx(args.speed)
+
     def add_clip(self, source, start, end):
         print(f'>  Loading {source}')
         print(f'>  >  Clipping from {start} to {end}')
         self.clips.append(editor.VideoFileClip(source).subclip(start, end))
 
+    def speedx(self, factor):
+        print(f'>  >  Speeding up by factor: {factor}')
+        self.clips[-1] = self.clips[-1].speedx(factor)
 
     def save(self):
         final = editor.concatenate_videoclips(self.clips)
